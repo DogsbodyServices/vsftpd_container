@@ -1,0 +1,14 @@
+services:
+  cw_ftp:
+    image: causewayit.azurecr.io/cw_ftp
+    container_name: cw_ftp
+    ports:
+      - "21:21"
+      - "2222:22"
+      - "10000-10250:10000-10250"
+#    environment:
+#      FTP_USER: "user"
+#      FTP_PASS: "password"
+    volumes:
+      - ./config/vsftpd.conf:/tmp/vsftpd.conf # (Optional) mount new config to the /tmp folder, entrypoint script will copy it to /etc/vsftpd/vsftpd.conf, there is a default file set at docker build time.
+      - ./config/vsftpd.banner:/etc/vsftpd/vsftpd.banner

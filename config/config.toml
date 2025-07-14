@@ -1,0 +1,5 @@
+realm = "vsftpd"
+endpoint = "https://keycloak.17042021.xyz"
+clientid = "VSFTPD"
+clientsecret = "gtvHDvTwgWhnF57jF1hptyIrI7RcevFS"
+clientscope = "openid"
