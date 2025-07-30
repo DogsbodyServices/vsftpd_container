@@ -20,11 +20,11 @@ chmod 644 "$FINAL_CONF"
 # Start vsftpd
 echo "[INFO] Starting vsftpd..."
 
-# Start vsftpd in the background
-/usr/sbin/vsftpd -obackground=YES /etc/vsftpd/vsftpd.conf &
+# Start vsftpd in the foreground
+rsyslogd && /usr/local/sbin/vsftpd /etc/vsftpd/vsftpd.conf
 
 # Wait a bit for vsftpd to start and log file to be ready
 sleep 1
 
 # Tail the log so Docker captures it
-tail -F /var/log/vsftpd.log
+#tail -F /var/log/vsftpd.log
