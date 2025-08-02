@@ -1,53 +1,48 @@
-FROM redhat/ubi9-minimal:latest
+# Stage 1: Build vsftpd
+FROM redhat/ubi9-minimal AS builder
 
-# Install dependencies for vsftpd build
 RUN microdnf install -y \
-    ca-certificates \
-    tar \
-    gzip \
-    make \
-    libcap-devel \
-    gcc \
-    rsyslog
+    ca-certificates tar gzip make gcc libcap-devel \
+    && curl -LO https://github.com/dagwieers/vsftpd/archive/refs/tags/3.0.2.tar.gz \
+    && tar -xzf 3.0.2.tar.gz \
+    && cd vsftpd-3.0.2 && make CFLAGS="-O2 -fPIE -Wno-error=enum-conversion" && make install
 
-# Install dependencies for pam
-RUN microdnf install -y \
-    pam
+# Stage 2: Runtime image
+FROM redhat/ubi9-minimal
 
-# Cleanup Microdnf
-RUN microdnf clean all
-
-# Install vsftpd from source
-RUN curl --fail --location -o ./3.0.2.tar.gz https://github.com/dagwieers/vsftpd/archive/refs/tags/3.0.2.tar.gz
-RUN tar -xzf ./3.0.2.tar.gz
-RUN cd vsftpd-3.0.2 \
-    && make CFLAGS="-O2 -fPIE -Wno-error=enum-conversion" \
-    && make install
-RUN rm -rf /vsftpd-3.0.2 /3.0.2.tar.gz
-
-# download and install keycloak PAM module
-#RUN curl --fail --location -o /tmp/kc-ssh-pam_amd64.rpm https://github.com/kha7iq/kc-ssh-pam/releases/download/v0.1.4/kc-ssh-pam_amd64.rpm \
-#    && rpm -i /tmp/kc-ssh-pam_amd64.rpm \
-#    && rm -f /tmp/kc-ssh-pam_amd64.rpm
-
-#RUN ls /etc/pam.d
-
+# Copy config files
 COPY ./config/vsftpd.conf /etc/vsftpd/vsftpd.conf
-COPY ./config/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./config/10-sftp_config.conf /etc/ssh/sshd_config.d/10-sftp_config.conf
 COPY ./config/vsftpd.banner /etc/vsftpd/vsftpd.banner
-RUN chmod +x /usr/local/bin/entrypoint.sh
-RUN echo "ftpuser" > /etc/vsftpd.user_list
-#COPY ./config/config.toml /opt/kc-ssh-pam/config.toml
-
-# Install Google Fuse Client for GCS mounting
 COPY ./config/gcsfuse.repo /etc/yum.repos.d/gcsfuse.repo
-RUN microdnf install -y gcsfuse
+COPY ./config/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./config/machine_keys/* /etc/ssh/
+RUN chmod +x /usr/local/bin/entrypoint.sh && echo "ftpuser" > /etc/vsftpd.user_list
 
-RUN useradd test && echo "test:password" | chpasswd
+# Install only runtime deps
+RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse && microdnf clean all
 
-RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log && chmod 666 /var/log/vsftpd*.log
+# Copy vsftpd binary and config from builder
+COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
 
-EXPOSE 21/tcp
-EXPOSE 22/tcp
+# Setup SSH and users
+RUN mkdir -p /var/run/sshd /data/tradex && \
+    groupadd simpleftp && \
+    #ssh-keygen -A && \
+    useradd -m -d /data/tradex/sftp -s /sbin/nologin -g simpleftp sftp && \
+    mkdir -p /data/tradex/sftp/upload && \
+    chown root:root /data/tradex/sftp && chmod 755 /data/tradex/sftp && \
+    chown sftp /data/tradex/sftp/upload && \
+    echo "sftp:password" | chpasswd && \
+    useradd test && echo "test:password" | chpasswd
 
+# Create log files and permissions
+RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure && \
+    chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log && chmod 644 /var/log/secure
+
+# Healthcheck to ensure vsftpd and SSH are running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
+    CMD ss -tln | grep -qE ':21|:22' || exit 1
+
+# Start the entrypoint
 CMD ["/usr/local/bin/entrypoint.sh"]

@@ -1,5 +1,5 @@
-realm = "vsftpd"
+realm = "tradex-ftp"
 endpoint = "https://keycloak.17042021.xyz"
-clientid = "VSFTPD"
-clientsecret = "gtvHDvTwgWhnF57jF1hptyIrI7RcevFS"
+clientid = "tradex-prod"
+clientsecret = "NOoKAHvPumJMUdWTLQiJ5rvosDBbVS6T"
 clientscope = "openid"

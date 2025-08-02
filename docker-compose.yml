@@ -1,7 +1,7 @@
 services:
   cw_ftp:
-    image: causewayit.azurecr.io/cw_ftp
-    container_name: cw_ftp
+    image: ftp_container:latest
+    container_name: ftp_container
     ports:
       - "21:21"
       - "2222:22"
