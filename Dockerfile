@@ -26,13 +26,13 @@ RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse && microdnf 
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
 
 # Setup SSH and users
-RUN mkdir -p /var/run/sshd /data/tradex && \
+RUN mkdir -p /var/run/sshd /data && \
     groupadd simpleftp && \
     #ssh-keygen -A && \
-    useradd -m -d /data/tradex/sftp -s /sbin/nologin -g simpleftp sftp && \
-    mkdir -p /data/tradex/sftp/upload && \
-    chown root:root /data/tradex/sftp && chmod 755 /data/tradex/sftp && \
-    chown sftp /data/tradex/sftp/upload && \
+    useradd -m -d /data/sftp -s /sbin/nologin -g simpleftp sftp && \
+    mkdir -p /data/sftp/upload && \
+    chown root:root /data/sftp && chmod 755 /data/sftp && \
+    chown sftp /data/sftp/upload && \
     echo "sftp:password" | chpasswd && \
     useradd test && echo "test:password" | chpasswd
 
