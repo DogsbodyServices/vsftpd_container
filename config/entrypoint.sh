@@ -11,6 +11,9 @@ if [ ! -f /etc/ssh/sshd_config ]; then
     exit 1
 fi
 
+# ---- Set perms on /etc/ssh/* machine keys ----
+chmod 644 /etc/ssh/*key*
+
 # Start SSH daemon (SFTP)
 echo "[INFO] Starting OpenSSH server..."
 /usr/sbin/sshd

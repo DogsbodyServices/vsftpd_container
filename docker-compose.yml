@@ -1,6 +1,6 @@
 services:
   cw_ftp:
-    image: ftp_container:latest
+    image: dogsbody.azurecr.io/vsftpd_container:latest
     container_name: ftp_container
     ports:
       - "21:21"
