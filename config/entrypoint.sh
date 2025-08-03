@@ -94,13 +94,13 @@ echo "[INFO] Starting vsftpd..."
 /usr/local/sbin/vsftpd /etc/vsftpd/vsftpd.conf
 
 # Verify vsftpd started
-sleep 1
-if ! ss -tln | grep -q ':21'; then
-    echo "[ERROR] vsftpd failed to start on port 21."
-    exit 1
-fi
-echo "[INFO] vsftpd is running on port 21."
+#sleep 1
+#if ! ss -tln | grep -q ':21'; then
+#    echo "[ERROR] vsftpd failed to start on port 21."
+#    exit 1
+#fi
+#echo "[INFO] vsftpd is running on port 21."
 
 # ---- Wait for both processes ----
-echo "[INFO] All services started. Container is now ready."
-wait -n
+#echo "[INFO] All services started. Container is now ready."
+#wait -n

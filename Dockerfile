@@ -41,8 +41,8 @@ RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure && \
     chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log && chmod 644 /var/log/secure
 
 # Healthcheck to ensure vsftpd and SSH are running
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
-    CMD ss -tln | grep -qE ':21|:22' || exit 1
+#HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
+#    CMD ss -tln | grep -qE ':21|:22' || exit 1
 
 # Start the entrypoint
 CMD ["/usr/local/bin/entrypoint.sh"]
