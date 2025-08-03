@@ -10,6 +10,7 @@ services:
       USER_CONFIG_PATH: "/etc/vsftpd/users.json"
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
-      
+#      GCS_BUCKET_NAME: "your-gcs-bucket-name"
+#      GCS_MOUNT_PATH: "/mnt/gcs"
     volumes:
-      - ./config.user.json:/etc/vsftpd/users.json
+      - ./config/users.json:/etc/vsftpd/users.json

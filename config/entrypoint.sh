@@ -36,7 +36,7 @@ fi
 ################################################
 # Set Machine Key Permissions
 ################################################
-chmod 644 /etc/ssh/*key*
+chmod 600 /etc/ssh/*key*
 
 ################################################
 # Set PASV port range if defined

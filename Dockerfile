@@ -20,7 +20,7 @@ COPY ./config/machine_keys/* /etc/ssh/
 RUN chmod +x /usr/local/bin/entrypoint.sh && echo "ftpuser" > /etc/vsftpd.user_list
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse jq && microdnf clean all
 
 # Copy vsftpd binary and config from builder
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
