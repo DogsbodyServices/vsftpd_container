@@ -1,6 +1,7 @@
 services:
   cw_ftp:
-    image: dogsbody.azurecr.io/vsftpd_container:latest
+    #image: dogsbody.azurecr.io/vsftpd_container:latest
+    image: ftp_container:latest
     container_name: ftp_container
     ports:
       - "21:21"
@@ -13,4 +14,4 @@ services:
 #      GCS_BUCKET_NAME: "your-gcs-bucket-name"
 #      GCS_MOUNT_PATH: "/mnt/gcs"
     volumes:
-      - ./config/users.json:/etc/vsftpd/users.json
+      - /home/ftp_container/config/users.json:/etc/vsftpd/users.json

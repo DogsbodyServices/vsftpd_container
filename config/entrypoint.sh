@@ -91,9 +91,10 @@ tail -F /var/log/secure | sed 's/^/[sshd] /' &
 
 # Start vsftpd
 echo "[INFO] Starting vsftpd..."
-/usr/local/sbin/vsftpd /etc/vsftpd/vsftpd.conf
+/usr/local/sbin/vsftpd /etc/vsftpd/vsftpd.conf &
 
 # Verify vsftpd started
+echo "[INFO] Waiting for vsftpd to start..."
 sleep 1
 if ! ss -tln | grep -q ':21'; then
     echo "[ERROR] vsftpd failed to start on port 21."
