@@ -1,19 +1,14 @@
 #!/bin/bash
 set -e
 
-# Check if USER_CONFIG_PATH is set, if not warn
-if [ -z "$USER_CONFIG_PATH" ]; then
-  echo "[WARN]: USER_CONFIG_PATH is not set. No users will be provisioned."
-fi
-
 ################################################
 # Bootstrap FTP/SFTP Users from file
 ################################################
-echo "[INFO] Bootstrapping users from: $USER_CONFIG_PATH"
 
-if [[ -f "$USER_CONFIG_PATH" ]]; then
-  for user in $(jq -r 'keys[]' "$USER_CONFIG_PATH"); do
-    hash=$(jq -r --arg u "$user" '.[$u]' "$USER_CONFIG_PATH")
+if [[ -f "/etc/vsftpd/users.json" ]]; then
+  echo "[INFO] User config found at /etc/vsftpd/users.json. Bootstrapping users..."
+  for user in $(jq -r 'keys[]' "/etc/vsftpd/users.json"); do
+    hash=$(jq -r --arg u "$user" '.[$u]' "/etc/vsftpd/users.json")
 
     if ! id "$user" &>/dev/null; then
       echo "[INFO] Creating user: $user"
@@ -30,7 +25,7 @@ if [[ -f "$USER_CONFIG_PATH" ]]; then
     chown $user:simpleftp /data/$user/upload
   done
 else
-  echo "[WARN] No user JSON found at $USER_CONFIG_PATH — skipping user bootstrap."
+  echo "[WARN] No user JSON found at /etc/vsftpd/users.json — skipping user bootstrap."
 fi
 
 ################################################

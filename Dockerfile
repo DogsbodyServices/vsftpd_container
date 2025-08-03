@@ -15,9 +15,13 @@ COPY ./config/vsftpd.conf /etc/vsftpd/vsftpd.conf
 COPY ./config/10-sftp_config.conf /etc/ssh/sshd_config.d/10-sftp_config.conf
 COPY ./config/vsftpd.banner /etc/vsftpd/vsftpd.banner
 COPY ./config/gcsfuse.repo /etc/yum.repos.d/gcsfuse.repo
-COPY ./config/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./scripts/update_users.sh /usr/local/bin/update_users.sh
 COPY ./config/machine_keys/* /etc/ssh/
-RUN chmod +x /usr/local/bin/entrypoint.sh && echo "ftpuser" > /etc/vsftpd.user_list
+RUN echo "{}" /etc/vsftpd/users.json && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/update_users.sh && \
+    echo "ftpuser" > /etc/vsftpd.user_list
 
 # Install only runtime deps
 RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse jq && microdnf clean all
@@ -41,8 +45,8 @@ RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure && \
     chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log && chmod 644 /var/log/secure
 
 # Healthcheck to ensure vsftpd and SSH are running
-#HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
-#    CMD ss -tln | grep -qE ':21|:22' || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
+    CMD ss -tln | grep -qE ':21|:22' || exit 1
 
 # Start the entrypoint
 CMD ["/usr/local/bin/entrypoint.sh"]

@@ -1,5 +1,0 @@
-realm = "tradex-ftp"
-endpoint = "https://keycloak.17042021.xyz"
-clientid = "tradex-prod"
-clientsecret = "NOoKAHvPumJMUdWTLQiJ5rvosDBbVS6T"
-clientscope = "openid"
