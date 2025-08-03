@@ -43,10 +43,10 @@ chmod 644 /etc/ssh/*key*
 ################################################
 if [ -n "$PASV_MIN_PORT" ] && [ -n "$PASV_MAX_PORT" ]; then
   echo "[INFO] Setting PASV port range: $PASV_MIN_PORT-$PASV_MAX_PORT"
+  sed 's/^pasv_min_port=.*/pasv_min_port=$PASV_MIN_PORT/' -i /etc/vsftpd/vsftpd.conf
+  sed 's/^pasv_max_port=.*/pasv_max_port=$PASV_MAX_PORT/' -i /etc/vsftpd/vsftpd.conf
 else
   echo "[WARN] PASV port range not set. Defaulting to 10000-10250."
-  PASV_MIN_PORT=10000
-  PASV_MAX_PORT=10250
 fi
 
 ################################################

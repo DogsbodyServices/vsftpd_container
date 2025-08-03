@@ -10,5 +10,6 @@ services:
       USER_CONFIG_PATH: "/etc/vsftpd/users.json"
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
+      
     volumes:
       - ./config.user.json:/etc/vsftpd/users.json
