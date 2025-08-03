@@ -1,6 +1,57 @@
 #!/bin/bash
 set -e
 
+# Check if USER_CONFIG_PATH is set, if not warn
+if [ -z "$USER_CONFIG_PATH" ]; then
+  echo "[WARN]: USER_CONFIG_PATH is not set. No users will be provisioned."
+fi
+
+################################################
+# Bootstrap FTP/SFTP Users from file
+################################################
+echo "[INFO] Bootstrapping users from: $USER_CONFIG_PATH"
+
+if [[ -f "$USER_CONFIG_PATH" ]]; then
+  for user in $(jq -r 'keys[]' "$USER_CONFIG_PATH"); do
+    hash=$(jq -r --arg u "$user" '.[$u]' "$USER_CONFIG_PATH")
+
+    if ! id "$user" &>/dev/null; then
+      echo "[INFO] Creating user: $user"
+      useradd -m -d /data/$user -s /sbin/nologin -g simpleftp "$user"
+    else
+      echo "[INFO] User $user already exists."
+    fi
+
+    sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
+
+    mkdir -p /data/$user/upload
+    chown root:root /data/$user
+    chmod 755 /data/$user
+    chown $user:simpleftp /data/$user/upload
+  done
+else
+  echo "[WARN] No user JSON found at $USER_CONFIG_PATH — skipping user bootstrap."
+fi
+
+################################################
+# Set Machine Key Permissions
+################################################
+chmod 644 /etc/ssh/*key*
+
+################################################
+# Set PASV port range if defined
+################################################
+if [ -n "$PASV_MIN_PORT" ] && [ -n "$PASV_MAX_PORT" ]; then
+  echo "[INFO] Setting PASV port range: $PASV_MIN_PORT-$PASV_MAX_PORT"
+else
+  echo "[WARN] PASV port range not set. Defaulting to 10000-10250."
+  PASV_MIN_PORT=10000
+  PASV_MAX_PORT=10250
+fi
+
+################################################
+# Start services
+################################################
 echo "[INFO] Starting SFTP (OpenSSH) and FTP (vsftpd) services..."
 
 # ---- Prepare SSHD (SFTP) ----
@@ -10,9 +61,6 @@ if [ ! -f /etc/ssh/sshd_config ]; then
     echo "[ERROR] /etc/ssh/sshd_config not found!"
     exit 1
 fi
-
-# ---- Set perms on /etc/ssh/* machine keys ----
-chmod 644 /etc/ssh/*key*
 
 # Start SSH daemon (SFTP)
 echo "[INFO] Starting OpenSSH server..."

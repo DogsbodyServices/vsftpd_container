@@ -6,9 +6,9 @@ services:
       - "21:21"
       - "2222:22"
       - "10000-10250:10000-10250"
-#    environment:
-#      FTP_USER: "user"
-#      FTP_PASS: "password"
-#    volumes:
-#      - ./config/vsftpd.conf:/tmp/vsftpd.conf # (Optional) mount new config to the /tmp folder, entrypoint script will copy it to /etc/vsftpd/vsftpd.conf, there is a default file set at docker build time.
-#      - ./config/vsftpd.banner:/etc/vsftpd/vsftpd.banner
+    environment:
+      USER_CONFIG_PATH: "/etc/vsftpd/users.json"
+      PASV_MIN_PORT: "10000"
+      PASV_MAX_PORT: "10250"
+    volumes:
+      - ./config.user.json:/etc/vsftpd/users.json
