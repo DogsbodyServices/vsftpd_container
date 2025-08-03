@@ -30,6 +30,6 @@ stages:
       inputs:
         command: buildAndPush
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        containerRegistry: dogsbody.azurecr.io
+        containerRegistry: push-dogsbody.azurecr.io
         repository: dogsbody/vsftpd_container
         tags: latest
