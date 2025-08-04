@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ftp-test
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcs-sa-secret
+  namespace: ftp-test
+type: Opaque
+data:
+  gcs-key.json: <base64-encoded-service-account-json>
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ftp-pv
+  namespace: ftp-test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/ftp-test # adjust path on host
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ftp-pvc
+  namespace: ftp-test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftp-server
+  namespace: ftp-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp-server
+  template:
+    metadata:
+      labels:
+        app: ftp-server
+    spec:
+      containers:
+        - name: ftp
+          image: dogsbody.azurecr.io/vsftpd_container:latest
+          ports:
+            - containerPort: 21   # FTP
+            - containerPort: 22   # SFTP
+            - containerPort: 10000
+            - containerPort: 10250
+          env:
+            - name: USER_CONFIG_PATH
+              value: "/etc/vsftpd/users.json"
+            - name: PASV_MIN_PORT
+              value: "10000"
+            - name: PASV_MAX_PORT
+              value: "10250"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/etc/gcp/gcs-key.json"
+          volumeMounts:
+            - name: user-config
+              mountPath: /etc/vsftpd/users.json
+              subPath: users.json
+              readOnly: true
+            - name: gcs-key
+              mountPath: /etc/gcp/gcs-key.json
+              subPath: gcs-key.json
+              readOnly: true
+            - name: ftp-storage
+              mountPath: /data
+      volumes:
+        - name: user-config
+          configMap:
+            name: ftp-users
+        - name: gcs-key
+          secret:
+            secretName: gcs-sa-secret
+        - name: ftp-storage
+          persistentVolumeClaim:
+            claimName: ftp-pvc
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftp-users
+  namespace: ftp-test
+data:
+  users.json: |
+    {
+      "test": "$6$hashedvaluehere",
+      "sftp": "$6$anotherhashvalue"
+    }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftp-svc
+  namespace: ftp-test
+spec:
+  type: NodePort
+  selector:
+    app: ftp-server
+  ports:
+    - port: 21
+      targetPort: 21
+      nodePort: 30210
+      name: ftp
+    - port: 2222
+      targetPort: 22
+      nodePort: 30222
+      name: sftp
+    - port: 10000
+      targetPort: 10000
+      nodePort: 31000
+      name: pasv-start
+    - port: 10250
+      targetPort: 10250
+      nodePort: 31250
+      name: pasv-end

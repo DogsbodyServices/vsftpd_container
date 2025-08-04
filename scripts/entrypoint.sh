@@ -2,8 +2,28 @@
 set -e
 
 ################################################
+# Mount GCS Bucket
+################################################
+if [ -z "$GCS_BUCKET_NAME" ] || [ -z "$GCS_MOUNT_PATH" ]; then
+  echo "[ERROR] GCS configuration is incomplete. Please set GCS_BUCKET_NAME and GCS_MOUNT_PATH."
+  exit 1
+else
+  echo "[INFO] Mounting GCS bucket: $GCS_BUCKET_NAME at $GCS_MOUNT_PATH"
+  mkdir -p "$GCS_MOUNT_PATH"
+  gcsfuse "$GCS_BUCKET_NAME" "$GCS_MOUNT_PATH"
+  if [ $? -ne 0 ]; then
+    echo "[ERROR] Failed to mount GCS bucket."
+    exit 1
+  fi
+  echo "[INFO] GCS bucket mounted successfully."
+fi
+
+################################################
 # Bootstrap FTP/SFTP Users from file
 ################################################
+
+# add nologin to shells to allow vsftd login
+echo "/sbin/nologin" >> /etc/shells
 
 if [[ -f "/etc/vsftpd/users.json" ]]; then
   echo "[INFO] User config found at /etc/vsftpd/users.json. Bootstrapping users..."
@@ -13,16 +33,29 @@ if [[ -f "/etc/vsftpd/users.json" ]]; then
     if ! id "$user" &>/dev/null; then
       echo "[INFO] Creating user: $user"
       useradd -m -d /data/$user -s /sbin/nologin -g simpleftp "$user"
+
     else
       echo "[INFO] User $user already exists."
     fi
 
     sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
 
-    mkdir -p /data/$user/upload
+    # Create user folder in GCS bucket
+    #mkdir /data/$user
     chown root:root /data/$user
     chmod 755 /data/$user
-    chown $user:simpleftp /data/$user/upload
+    echo "[INFO] User $user created with home directory /data/$user."
+
+    # Create in/out directories
+    mkdir -p /mnt/gcs/$user/in /mnt/gcs/$user/out
+    chown "$user" /mnt/gcs/$user/in /mnt/gcs/$user/out
+    chmod 700 /mnt/gcs/$user/in /mnt/gcs/$user/out
+    echo "[INFO] Created in/out directories for user $user."
+
+    # Symlink in and out directories to GCS bucket
+    ln -s /mnt/gcs/$user/in /data/$user/in
+    ln -s /mnt/gcs/$user/out /data/$user/out
+    echo "[INFO] Symlinked in/out directories for user $user to GCS bucket."
   done
 else
   echo "[WARN] No user JSON found at /etc/vsftpd/users.json — skipping user bootstrap."

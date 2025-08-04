@@ -24,10 +24,20 @@ for user in $(jq -r 'keys[]' "$CONFIG_PATH"); do
   useradd -m -d "$BASE_DIR/$user" -s /sbin/nologin -g "$GROUP" "$user"
   sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
 
-  mkdir -p "$BASE_DIR/$user/upload"
-  chown root:root "$BASE_DIR/$user"
-  chmod 755 "$BASE_DIR/$user"
-  chown $user:$GROUP "$BASE_DIR/$user/upload"
+  # Create user folder in GCS bucket
+  mkdir /data/$user
+  chown root:root /data/$user
+  chmod 755 /data/$user
+  echo "[INFO] User $user created with home directory /data/$user."
+
+  # Create in/out directories
+  mkdir -p /data/$user/in /data/$user/out
+  chown "$user:$user" /data/$user/in /data/$user/out
+  chmod 700 /data/$user/in /data/$user/out
+
+  # Symlink in and out directories to GCS bucket
+  ln -sf /mnt/gcs/$user/in /data/$user/in
+  ln -sf /mnt/gcs/$user/out /data/$user/out
 done
 
 echo "[INFO] User sync complete."
