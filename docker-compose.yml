@@ -7,16 +7,10 @@ services:
       - "21:21"
       - "2222:22"
       - "10000-10250:10000-10250"
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - /dev/fuse
     environment:
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
-      GOOGLE_APPLICATION_CREDENTIALS: "/mnt/gcp/gcs-key.json"
-      GCS_BUCKET_NAME: "cw-poc-ftp-data"
-      GCS_MOUNT_PATH: "/mnt/gcs"
+      PASV_ADDRESS: "127.0.0.1"
     volumes:
       - ${PWD}/config/users.json:/etc/vsftpd/users.json:ro
-      - ${PWD}/config/shared-infrastructure-339311-05a6996fcbb3.json:/mnt/gcp/gcs-key.json:ro
+      - ${PWD}/data:/data

@@ -2,28 +2,11 @@
 set -e
 
 ################################################
-# Mount GCS Bucket
-################################################
-if [ -z "$GCS_BUCKET_NAME" ] || [ -z "$GCS_MOUNT_PATH" ]; then
-  echo "[ERROR] GCS configuration is incomplete. Please set GCS_BUCKET_NAME and GCS_MOUNT_PATH."
-  exit 1
-else
-  echo "[INFO] Mounting GCS bucket: $GCS_BUCKET_NAME at $GCS_MOUNT_PATH"
-  mkdir -p "$GCS_MOUNT_PATH"
-  gcsfuse "$GCS_BUCKET_NAME" "$GCS_MOUNT_PATH"
-  if [ $? -ne 0 ]; then
-    echo "[ERROR] Failed to mount GCS bucket."
-    exit 1
-  fi
-  echo "[INFO] GCS bucket mounted successfully."
-fi
-
-################################################
 # Bootstrap FTP/SFTP Users from file
 ################################################
 
 # add nologin to shells to allow vsftd login
-echo "/sbin/nologin" >> /etc/shells
+grep -qxF "/sbin/nologin" /etc/shells || echo "/sbin/nologin" >> /etc/shells
 
 if [[ -f "/etc/vsftpd/users.json" ]]; then
   echo "[INFO] User config found at /etc/vsftpd/users.json. Bootstrapping users..."
@@ -40,22 +23,21 @@ if [[ -f "/etc/vsftpd/users.json" ]]; then
 
     sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
 
-    # Create user folder in GCS bucket
-    #mkdir /data/$user
-    chown root:root /data/$user
-    chmod 755 /data/$user
     echo "[INFO] User $user created with home directory /data/$user."
 
-    # Create in/out directories
-    mkdir -p /mnt/gcs/$user/in /mnt/gcs/$user/out
-    chown "$user" /mnt/gcs/$user/in /mnt/gcs/$user/out
-    chmod 700 /mnt/gcs/$user/in /mnt/gcs/$user/out
+    # Set root folder permissions to be unwritable by user
+    chown root:root /data/$user
+    chmod 755 /data/$user
+
+    # Create user in/out folders in Directory
+    mkdir -p /data/$user/in /data/$user/out
+    chown "$user" /data/$user/in /data/$user/out
+    chmod 700 /data/$user/in /data/$user/out
     echo "[INFO] Created in/out directories for user $user."
 
-    # Symlink in and out directories to GCS bucket
-    ln -s /mnt/gcs/$user/in /data/$user/in
-    ln -s /mnt/gcs/$user/out /data/$user/out
-    echo "[INFO] Symlinked in/out directories for user $user to GCS bucket."
+    # Create bind mount points for in/out directories
+    mkdir -p /data/$user/in /data/$user/out
+
   done
 else
   echo "[WARN] No user JSON found at /etc/vsftpd/users.json — skipping user bootstrap."
@@ -70,9 +52,10 @@ chmod 600 /etc/ssh/*key*
 # Set PASV port range if defined
 ################################################
 if [ -n "$PASV_MIN_PORT" ] && [ -n "$PASV_MAX_PORT" ]; then
-  echo "[INFO] Setting PASV port range: $PASV_MIN_PORT-$PASV_MAX_PORT"
-  sed 's/^pasv_min_port=.*/pasv_min_port=$PASV_MIN_PORT/' -i /etc/vsftpd/vsftpd.conf
-  sed 's/^pasv_max_port=.*/pasv_max_port=$PASV_MAX_PORT/' -i /etc/vsftpd/vsftpd.conf
+  echo "[INFO] Setting PASV port range: $PASV_MIN_PORT-$PASV_MAX_PORT, PASV address: $PASV_ADDRESS"
+  sed "s/^pasv_min_port=.*/pasv_min_port=${PASV_MIN_PORT}/" -i /etc/vsftpd/vsftpd.conf
+  sed "s/^pasv_max_port=.*/pasv_max_port=${PASV_MAX_PORT}/" -i /etc/vsftpd/vsftpd.conf
+  sed "s/^pasv_address=.*/pasv_address=${PASV_ADDRESS}/" -i /etc/vsftpd/vsftpd.conf
 else
   echo "[WARN] PASV port range not set. Defaulting to 10000-10250."
 fi

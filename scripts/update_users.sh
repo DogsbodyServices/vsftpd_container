@@ -7,37 +7,37 @@ BASE_DIR="/data"
 
 echo "[INFO] Updating users from: $CONFIG_PATH"
 
-if [[ ! -f "$CONFIG_PATH" ]]; then
-  echo "[ERROR] User config not found: $CONFIG_PATH"
-  exit 1
+if [[ -f "/etc/vsftpd/users.json" ]]; then
+  echo "[INFO] User config found at /etc/vsftpd/users.json. Bootstrapping users..."
+  for user in $(jq -r 'keys[]' "/etc/vsftpd/users.json"); do
+    hash=$(jq -r --arg u "$user" '.[$u]' "/etc/vsftpd/users.json")
+
+    if ! id "$user" &>/dev/null; then
+      echo "[INFO] Creating user: $user"
+      useradd -m -d /data/$user -s /sbin/nologin -g simpleftp "$user"
+
+    else
+      echo "[INFO] User $user already exists."
+    fi
+
+    sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
+
+    echo "[INFO] User $user created with home directory /data/$user."
+
+    # Set root folder permissions to be unwritable by user
+    chown root:root /data/$user
+    chmod 755 /data/$user
+
+    # Create user in/out folders in Directory
+    mkdir -p /data/$user/in /data/$user/out
+    chown "$user" /data/$user/in /data/$user/out
+    chmod 700 /data/$user/in /data/$user/out
+    echo "[INFO] Created in/out directories for user $user."
+
+    # Create bind mount points for in/out directories
+    mkdir -p /data/$user/in /data/$user/out
+
+  done
+else
+  echo "[WARN] No user JSON found at /etc/vsftpd/users.json — skipping user bootstrap."
 fi
-
-for user in $(jq -r 'keys[]' "$CONFIG_PATH"); do
-  hash=$(jq -r --arg u "$user" '.[$u]' "$CONFIG_PATH")
-
-  if id "$user" &>/dev/null; then
-    echo "[INFO] User $user already exists."
-    continue
-  fi
-
-  echo "[INFO] Creating user: $user"
-  useradd -m -d "$BASE_DIR/$user" -s /sbin/nologin -g "$GROUP" "$user"
-  sed -i "s|^$user:[^:]*:|$user:$hash:|" /etc/shadow
-
-  # Create user folder in GCS bucket
-  mkdir /data/$user
-  chown root:root /data/$user
-  chmod 755 /data/$user
-  echo "[INFO] User $user created with home directory /data/$user."
-
-  # Create in/out directories
-  mkdir -p /data/$user/in /data/$user/out
-  chown "$user:$user" /data/$user/in /data/$user/out
-  chmod 700 /data/$user/in /data/$user/out
-
-  # Symlink in and out directories to GCS bucket
-  ln -sf /mnt/gcs/$user/in /data/$user/in
-  ln -sf /mnt/gcs/$user/out /data/$user/out
-done
-
-echo "[INFO] User sync complete."

@@ -2,7 +2,7 @@
 FROM redhat/ubi9-minimal AS builder
 
 RUN microdnf install -y \
-    ca-certificates tar gzip make gcc libcap-devel fuse fuse-libs \
+    ca-certificates tar gzip make gcc libcap-devel \
     && curl -LO https://github.com/dagwieers/vsftpd/archive/refs/tags/3.0.2.tar.gz \
     && tar -xzf 3.0.2.tar.gz \
     && cd vsftpd-3.0.2 && make CFLAGS="-O2 -fPIE -Wno-error=enum-conversion" && make install
@@ -26,7 +26,7 @@ RUN echo "{}" /etc/vsftpd/users.json && \
     mkdir /mnt/gcs
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils gcsfuse jq && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils jq && microdnf clean all
 
 # Copy vsftpd binary and config from builder
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd

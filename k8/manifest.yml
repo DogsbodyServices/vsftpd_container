@@ -5,16 +5,6 @@ metadata:
 
 ---
 apiVersion: v1
-kind: Secret
-metadata:
-  name: gcs-sa-secret
-  namespace: ftp-test
-type: Opaque
-data:
-  gcs-key.json: <base64-encoded-service-account-json>
-
----
-apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: ftp-pv
@@ -23,9 +13,9 @@ spec:
   accessModes:
     - ReadWriteOnce
   capacity:
-    storage: 1Gi
+    storage: 10Gi
   hostPath:
-    path: /data/ftp-test # adjust path on host
+    path: /data # adjust path on host
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,7 +27,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 10Gi
 
 ---
 apiVersion: apps/v1
@@ -58,6 +48,9 @@ spec:
       containers:
         - name: ftp
           image: dogsbody.azurecr.io/vsftpd_container:latest
+          imagePullPolicy: Always
+          imagePullSecrets:
+            - name: dogbodys-registry
           ports:
             - containerPort: 21   # FTP
             - containerPort: 22   # SFTP
@@ -70,16 +63,12 @@ spec:
               value: "10000"
             - name: PASV_MAX_PORT
               value: "10250"
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: "/etc/gcp/gcs-key.json"
+            - name: PASV_ADDRESS
+              value: "127.0.0.1"
           volumeMounts:
             - name: user-config
               mountPath: /etc/vsftpd/users.json
               subPath: users.json
-              readOnly: true
-            - name: gcs-key
-              mountPath: /etc/gcp/gcs-key.json
-              subPath: gcs-key.json
               readOnly: true
             - name: ftp-storage
               mountPath: /data
@@ -103,8 +92,9 @@ metadata:
 data:
   users.json: |
     {
-      "test": "$6$hashedvaluehere",
-      "sftp": "$6$anotherhashvalue"
+      "aaron": "$y$j9T$QGcBtB4.9NtptjoDgOGB51$hcIe4Ei4nM39rW.6pYBcVQjBHBRv0Jh4UdpeJA5C0x5",
+      "plainftp": "$6$BWZe/CFWGwBT4QTL$jB7eibRC0F99aIIf2dZJhut9xmTwrNkzqpx41nRLgFIY9ISkiCD8Y5457qTLoRzCLGKGUp9dEok1NCsd.2Ty0/",
+      "sftp": "$6$BWZe/CFWGwBT4QTL$jB7eibRC0F99aIIf2dZJhut9xmTwrNkzqpx41nRLgFIY9ISkiCD8Y5457qTLoRzCLGKGUp9dEok1NCsd.2Ty0/"
     }
 
 ---
@@ -122,9 +112,9 @@ spec:
       targetPort: 21
       nodePort: 30210
       name: ftp
-    - port: 2222
+    - port: 22
       targetPort: 22
-      nodePort: 30222
+      nodePort: 30022
       name: sftp
     - port: 10000
       targetPort: 10000
