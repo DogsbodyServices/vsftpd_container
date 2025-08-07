@@ -1,6 +1,6 @@
 # VSFTPD + SFTP Container
 
-This project provides a secure, containerized FTP/SFTP server based on `vsftpd` and OpenSSH. It supports user-based access with chrooted home directories, dynamic user provisioning via a JSON file, and readiness for integration with systems like Keycloak (OIDC/PAM).
+This project provides a secure, containerized FTP/SFTP server based on `vsftpd` and OpenSSH. It supports user-based access with chrooted home directories, dynamic user provisioning via a JSON file.
 
 ---
 
@@ -138,15 +138,6 @@ Ensure secrets for registry login are securely managed in Azure DevOps.
 - [ ] Add user provisioning via API call to Keycloak
 - [ ] Replace JSON file with secure secret management (Vault/KMS)
 - [ ] Support SSH key-based login from Keycloak attributes
-
----
-
-## 🧪 Test Credentials
-
-For local testing (remove in production):
-
-- `test:test`
-- `sftp:sftp` (chrooted to `/data/sftp/upload`)
 
 ---
 
