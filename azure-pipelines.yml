@@ -51,6 +51,6 @@ stages:
       displayName: Push to GitHub container registry
       inputs:
         command: push
-        containerRegistry: github.com_DogsbodyServices
+        containerRegistry: github-container-registry
         repository: vsftpd_container
         tags: latest
