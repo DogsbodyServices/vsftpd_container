@@ -52,5 +52,5 @@ stages:
       inputs:
         command: push
         containerRegistry: github-container-registry
-        repository: vsftpd_container
+        repository: DogsbodyServices/vsftpd_container
         tags: latest
