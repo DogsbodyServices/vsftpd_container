@@ -12,7 +12,6 @@ This project provides a secure, containerized FTP/SFTP server based on `vsftpd` 
 - **Chrooted upload directories**
 - **Customizable via environment variables**
 - **Healthchecks for container orchestration**
-- **Ready for integration with PAM/Keycloak**
 
 ---
 
@@ -34,19 +33,21 @@ Compose example:
 
 ```yaml
 services:
-  ftp_container:
-    image: yourregistry/vsftpd_container:latest
+  cw_ftp:
+    #image: dogsbody.azurecr.io/vsftpd_container:latest
+    image: ftp_container:latest
     container_name: ftp_container
     ports:
-      - "21:21"         # FTP
-      - "2222:22"       # SFTP
-      - "10000-10250:10000-10250"  # Passive range
+      - "21:21"
+      - "2222:22"
+      - "10000-10250:10000-10250"
     environment:
-      USER_CONFIG_PATH: "/etc/vsftpd/users.json"
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
+      PASV_ADDRESS: "127.0.0.1"
     volumes:
-      - ./config/users.json:/etc/vsftpd/users.json:ro
+      - ${PWD}/config/users.json:/etc/vsftpd/users.json:ro
+      - ${PWD}/data:/data
 ```
 
 ---

@@ -45,12 +45,13 @@ spec:
       labels:
         app: ftp-server
     spec:
+
+      imagePullSecrets:
+        - name: dogsbody-registry
       containers:
         - name: ftp
           image: dogsbody.azurecr.io/vsftpd_container:latest
           imagePullPolicy: Always
-          imagePullSecrets:
-            - name: dogbodys-registry
           ports:
             - containerPort: 21   # FTP
             - containerPort: 22   # SFTP
@@ -104,23 +105,47 @@ metadata:
   name: ftp-svc
   namespace: ftp-test
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: ftp-server
   ports:
     - port: 21
       targetPort: 21
-      nodePort: 30210
       name: ftp
     - port: 22
       targetPort: 22
-      nodePort: 30022
       name: sftp
     - port: 10000
       targetPort: 10000
-      nodePort: 31000
       name: pasv-start
     - port: 10250
       targetPort: 10250
-      nodePort: 31250
       name: pasv-end
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ftp-ingress
+  namespace: ftp-test
+spec:
+  entryPoints:
+    - ilp
+  routes:
+    - match: HostSNI('ftp.17042021.xyz')
+      services:
+        - name: ftp-svc
+          port: 21
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: sftp-ingress
+  namespace: ftp-test
+spec:
+  entryPoints:
+    - ilp
+  routes:
+    - match: HostSNI('sftp.17042021.xyz')
+      services:
+        - name: ftp-svc
+          port: 22

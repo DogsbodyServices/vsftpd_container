@@ -34,13 +34,6 @@ COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
 # Setup SSH and users
 RUN mkdir -p /var/run/sshd /data && \
     groupadd simpleftp
-    #ssh-keygen -A && \
-#    useradd -m -d /data/sftp -s /sbin/nologin -g simpleftp sftp && \
-#    mkdir -p /data/sftp/upload && \
-#    chown root:root /data/sftp && chmod 755 /data/sftp && \
-#    chown sftp /data/sftp/upload && \
-#    echo "sftp:password" | chpasswd && \
-#    useradd test && echo "test:password" | chpasswd
 
 # Create log files and permissions
 RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure && \
