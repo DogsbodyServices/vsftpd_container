@@ -29,7 +29,7 @@ stages:
       displayName: Docker login to GitHub container registry
       inputs:
         command: login
-        containerRegistry: github.com_DogsbodyServices
+        containerRegistry: github-container-registry
 
     - task: Docker@2
       displayName: Build an image
