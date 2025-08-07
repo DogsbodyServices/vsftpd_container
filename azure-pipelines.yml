@@ -30,11 +30,27 @@ stages:
       inputs:
         command: login
         containerRegistry: github.com_DogsbodyServices
+
     - task: Docker@2
-      displayName: Build and push to ACR
+      displayName: Build an image
       inputs:
-        command: buildAndPush
+        command: build
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-#        containerRegistry: push-dogsbody.azurecr.io
+        repository: vsftpd_container
+        tags: latest
+
+
+    - task: Docker@2
+      displayName: Push to ACR
+      inputs:
+        command: push
+        containerRegistry: push-dogsbody.azurecr.io
+        repository: vsftpd_container
+        tags: latest
+    - task: Docker@2
+      displayName: Push to GitHub container registry
+      inputs:
+        command: push
+        containerRegistry: github.com_DogsbodyServices
         repository: vsftpd_container
         tags: latest
