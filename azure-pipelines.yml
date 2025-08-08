@@ -25,11 +25,11 @@ stages:
       inputs:
         command: login
         containerRegistry: push-dogsbody.azurecr.io
-#    - task: Docker@2
-#      displayName: Docker login to GitHub container registry
-#      inputs:
-#        command: login
-#        containerRegistry: github-container-registry
+    - task: Docker@2
+      displayName: Docker login to GitHub container registry
+      inputs:
+        command: login
+        containerRegistry: github-container-registry
 
     - task: Docker@2
       displayName: Build an image
@@ -37,7 +37,9 @@ stages:
         command: build
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: vsftpd_container
-        tags: latest
+        tags: |
+          - latest
+          - DogsbodyServices/vsftpd_container:latest
 
 
     - task: Docker@2
@@ -47,10 +49,10 @@ stages:
         containerRegistry: push-dogsbody.azurecr.io
         repository: vsftpd_container
         tags: latest
-#    - task: Docker@2
-#      displayName: Push to GitHub container registry
-#      inputs:
-#        command: push
-#        containerRegistry: github-container-registry
-#        repository: DogsbodyServices/vsftpd_container
-#        tags: latest
+    - task: Docker@2
+      displayName: Push to GitHub container registry
+      inputs:
+        command: push
+        containerRegistry: github-container-registry
+        repository: vsftpd_container
+        tags: latest
