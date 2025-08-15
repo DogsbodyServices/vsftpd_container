@@ -36,10 +36,10 @@ stages:
       inputs:
         command: build
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        repository: vsftpd_container
+        repository: vsftpd
         tags: |
           - latest
-          - DogsbodyServices/vsftpd_container:latest
+          - DogsbodyServices/vsftpd:latest
 
 
     - task: Docker@2
@@ -47,12 +47,12 @@ stages:
       inputs:
         command: push
         containerRegistry: push-dogsbody.azurecr.io
-        repository: vsftpd_container
+        repository: vsftpd
         tags: latest
     - task: Docker@2
       displayName: Push to GitHub container registry
       inputs:
         command: push
         containerRegistry: github-container-registry
-        repository: vsftpd_container
+        repository: vsftpd
         tags: latest
