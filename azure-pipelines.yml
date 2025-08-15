@@ -39,8 +39,6 @@ stages:
         repository: vsftpd
         tags: |
           - latest
-          - DogsbodyServices/vsftpd:latest
-
 
     - task: Docker@2
       displayName: Push to ACR
