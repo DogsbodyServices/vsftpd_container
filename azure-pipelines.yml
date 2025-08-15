@@ -3,7 +3,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- main
+- releases/*
 
 resources:
 - repo: self
@@ -33,4 +33,7 @@ stages:
         containerRegistry: push-dogsbody.azurecr.io
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         repository: vsftpd
-        tags: latest
+        # set tag based on branch name
+        tags: |
+          latest
+          $(Build.SourceBranchName)
