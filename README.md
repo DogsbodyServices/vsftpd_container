@@ -12,6 +12,7 @@ This project provides a secure, containerized FTP/SFTP server based on `vsftpd` 
 - **Chrooted upload directories**
 - **Customizable via environment variables**
 - **Healthchecks for container orchestration**
+- **Passive address resolution from provided domain name**
 
 ---
 
@@ -44,7 +45,7 @@ services:
     environment:
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
-      PASV_ADDRESS: "127.0.0.1"
+      PASV_ADDRESS: "ftp.server.com"
     volumes:
       - ${PWD}/config/users.json:/etc/vsftpd/users.json:ro
       - ${PWD}/data:/data
@@ -84,6 +85,9 @@ services:
 ```
 
 Passwords must be hashed using SHA-512 (`crypt.crypt()` in Python).
+
+To retrieve a list of user and their crypted passwords from an existing server run ./scripts/user_export.sh.  
+The generated file is your users.json
 
 ### Sync behavior
 
@@ -134,10 +138,7 @@ Ensure secrets for registry login are securely managed in Azure DevOps.
 
 ## 🗂 Roadmap
 
-- [ ] Integrate PAM with Keycloak (optional)
-- [ ] Add user provisioning via API call to Keycloak
 - [ ] Replace JSON file with secure secret management (Vault/KMS)
-- [ ] Support SSH key-based login from Keycloak attributes
 
 ---
 
