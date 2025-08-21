@@ -15,6 +15,7 @@ COPY ./config/vsftpd.conf /etc/vsftpd/vsftpd.conf
 COPY ./config/10-sftp_config.conf /etc/ssh/sshd_config.d/10-sftp_config.conf
 COPY ./config/vsftpd.banner /etc/vsftpd/vsftpd.banner
 COPY ./config/gcsfuse.repo /etc/yum.repos.d/gcsfuse.repo
+COPY ./config/00-stdout.conf /etc/rsyslog.d/00-stdout.conf
 COPY ./scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY ./scripts/update_users.sh /usr/local/bin/update_users.sh
 COPY ./config/machine_keys/* /etc/ssh/
@@ -26,7 +27,7 @@ RUN echo "{}" /etc/vsftpd/users.json && \
     mkdir /mnt/gcs
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils jq && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils jq glibc rsyslog && microdnf clean all
 
 # Copy vsftpd binary and config from builder
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
