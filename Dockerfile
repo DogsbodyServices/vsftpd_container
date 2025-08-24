@@ -27,7 +27,7 @@ RUN echo "{}" /etc/vsftpd/users.json && \
     mkdir /mnt/gcs
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils jq glibc rsyslog && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils jq glibc rsyslog cronie && microdnf clean all
 
 # Copy vsftpd binary and config from builder
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
