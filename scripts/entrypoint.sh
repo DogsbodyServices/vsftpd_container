@@ -63,6 +63,22 @@ fi
 ################################################
 # Start services
 ################################################
+# Prepare socket dir and link it to /dev/log so all daemons find it
+mkdir -p /var/run/rsyslog/dev
+ln -sf /var/run/rsyslog/dev/log /dev/log
+
+# Start rsyslog in foreground (background it with & so the script continues)
+rsyslogd -n &
+
+# Give it a moment to create the socket
+sleep 0.3
+
+# Sanity check (optional): should now exist
+if [ ! -S /dev/log ]; then
+  echo "[ERROR] /dev/log not created by rsyslog; logging will be broken."
+fi
+
+
 echo "[INFO] Starting SFTP (OpenSSH) and FTP (vsftpd) services..."
 
 # ---- Prepare SSHD (SFTP) ----
@@ -90,15 +106,6 @@ if [ ! -f /etc/vsftpd/vsftpd.conf ]; then
     echo "[ERROR] /etc/vsftpd/vsftpd.conf not found!"
     exit 1
 fi
-
-# Ensure vsftpd log files exist
-touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log
-chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log
-
-# Stream  logs to Docker logs
-tail -F /var/log/vsftpd.log | sed 's/^/[vsftpd] /'  &
-tail -F /var/log/vsftpd_verbose.log | sed 's/^/[vsftpd] /'  >&2 &
-tail -F /var/log/secure | sed 's/^/[sshd] /' &
 
 # Start vsftpd
 echo "[INFO] Starting vsftpd..."
