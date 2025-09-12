@@ -61,6 +61,16 @@ else
 fi
 
 ################################################
+# Enable TLS if options are set
+################################################
+if [ "$ENABLE_FTPS" == "YES" ] then
+  sed "s/^ssl_enable=.*/ssl_enable=YES/" -i /etc/vsftpd/vsftpd.conf
+  echo "[INFO] FTPS enabled."
+else
+  echo "[INFO] FTPS not enabled."
+fi
+
+################################################
 # Start services
 ################################################
 echo "[INFO] Starting SFTP (OpenSSH) and FTP (vsftpd) services..."
