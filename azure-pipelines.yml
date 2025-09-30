@@ -37,3 +37,21 @@ stages:
         tags: |
           latest
           $(Build.SourceBranchName)
+
+- stage: Generate SBOM with grype
+  displayName: Generate SBOM with grype
+  dependsOn: Build
+  jobs:
+  - job: GenerateSBOM
+    displayName: Generate SBOM
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+      displayName: Install grype
+    - script: |
+        grype vsftpd:latest -o cyclonedx-json > $(Build.ArtifactStagingDirectory)/sbom-vsftpd-latest.json
+        grype vsftpd:$(Build.SourceBranchName) -o cyclonedx-json > $(Build.ArtifactStagingDirectory)/sbom-vsftpd-$(Build.SourceBranchName).json
+      displayName: Generate SBOM
+    - 
