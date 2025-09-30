@@ -23,7 +23,10 @@ RUN echo "{}" /etc/vsftpd/users.json && \
     echo "ftpuser" > /etc/vsftpd.user_list
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils jq && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils jq glibc rsyslog cronie && microdnf clean all
+
+# Disable imjournal module in default rsyslog config to prevent journal errors in containers
+RUN sed -i '/^module(load="imjournal"/,/^[[:space:]]*StateFile="imjournal.state")/s/^/#/' /etc/rsyslog.conf
 
 # Copy vsftpd binary and config from builder
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
