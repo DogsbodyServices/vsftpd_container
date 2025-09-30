@@ -1,7 +1,6 @@
 services:
   cw_ftp:
-    #image: dogsbody.azurecr.io/vsftpd_container:latest
-    image: ftp_container:latest
+    image: dogsbody.azurecr.io/vsftpd_container:latest
     container_name: ftp_container
     ports:
       - "21:21"
@@ -10,7 +9,8 @@ services:
     environment:
       PASV_MIN_PORT: "10000"
       PASV_MAX_PORT: "10250"
-      PASV_ADDRESS: "ftp.server.com"
+      PASV_ADDRESS: "cpa-ftp.staging.causeway.com"
     volumes:
       - ${PWD}/config/users.json:/etc/vsftpd/users.json:ro
       - ${PWD}/data:/data
+      - ${PWD}/certs:/etc/vsftpd/certs:ro  # FTPS certificates (optional)

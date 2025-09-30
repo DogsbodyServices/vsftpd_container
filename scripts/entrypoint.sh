@@ -63,7 +63,7 @@ fi
 ################################################
 # Enable TLS if options are set
 ################################################
-if [ "$ENABLE_FTPS" == "YES" ] then
+if [ "$ENABLE_FTPS" == "YES" ]; then
   sed "s/^ssl_enable=.*/ssl_enable=YES/" -i /etc/vsftpd/vsftpd.conf
   echo "[INFO] FTPS enabled."
 else
@@ -80,13 +80,32 @@ ln -sf /var/run/rsyslog/dev/log /dev/log
 # Start rsyslog in foreground (background it with & so the script continues)
 rsyslogd -n &
 
-# Give it a moment to create the socket
-sleep 0.3
+# Give it more time to create the socket and retry if needed
+for i in {1..10}; do
+  sleep 0.5
+  if [ -S /var/run/rsyslog/dev/log ]; then
+    echo "[INFO] rsyslog socket created successfully."
+    break
+  fi
+done
 
-# Sanity check (optional): should now exist
+# Sanity check: should now exist
 if [ ! -S /dev/log ]; then
   echo "[ERROR] /dev/log not created by rsyslog; logging will be broken."
+  echo "[DEBUG] Checking /var/run/rsyslog/dev/log: $(ls -la /var/run/rsyslog/dev/ 2>/dev/null || echo 'Directory not found')"
 fi
+
+# Start cron daemon for periodic user updates
+echo "[INFO] Starting cron daemon for periodic user updates..."
+crond
+
+# Verify cron started
+sleep 0.5
+if ! ps aux | grep -q "[c]rond"; then
+    echo "[ERROR] crond failed to start."
+    exit 1
+fi
+echo "[INFO] cron daemon is running."
 
 
 echo "[INFO] Starting SFTP (OpenSSH) and FTP (vsftpd) services..."

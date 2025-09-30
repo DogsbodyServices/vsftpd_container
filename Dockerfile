@@ -14,6 +14,7 @@ FROM redhat/ubi9-minimal
 COPY ./config/vsftpd.conf /etc/vsftpd/vsftpd.conf
 COPY ./config/10-sftp_config.conf /etc/ssh/sshd_config.d/10-sftp_config.conf
 COPY ./config/vsftpd.banner /etc/vsftpd/vsftpd.banner
+COPY ./config/00-stdout.conf /etc/rsyslog.d/00-stdout.conf
 COPY ./scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY ./scripts/update_users.sh /usr/local/bin/update_users.sh
 COPY ./config/machine_keys/* /etc/ssh/
@@ -23,7 +24,7 @@ RUN echo "{}" /etc/vsftpd/users.json && \
     echo "ftpuser" > /etc/vsftpd.user_list
 
 # Install only runtime deps
-RUN microdnf install -y openssh-server iproute shadow-utils jq glibc rsyslog cronie && microdnf clean all
+RUN microdnf install -y openssh-server iproute shadow-utils jq rsyslog cronie procps-ng && microdnf clean all
 
 # Disable imjournal module in default rsyslog config to prevent journal errors in containers
 RUN sed -i '/^module(load="imjournal"/,/^[[:space:]]*StateFile="imjournal.state")/s/^/#/' /etc/rsyslog.conf
@@ -32,12 +33,16 @@ RUN sed -i '/^module(load="imjournal"/,/^[[:space:]]*StateFile="imjournal.state"
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
 
 # Setup SSH and users
-RUN mkdir -p /var/run/sshd /data && \
-    groupadd simpleftp
+RUN mkdir -p /var/run/sshd /data /var/run/rsyslog/dev && \
+    groupadd simpleftp && \
+    chmod 755 /var/run/rsyslog
+
+# Setup cron job to update users every 30 minutes
+RUN echo "*/30 * * * * /usr/local/bin/update_users.sh >> /var/log/user_updates.log 2>&1" | crontab -
 
 # Create log files and permissions
-RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure && \
-    chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log && chmod 644 /var/log/secure
+RUN touch /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/secure /var/log/user_updates.log && \
+    chmod 666 /var/log/vsftpd.log /var/log/vsftpd_verbose.log /var/log/user_updates.log && chmod 644 /var/log/secure
 
 # Healthcheck to ensure vsftpd and SSH are running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
