@@ -28,15 +28,17 @@ if [[ -f "/etc/vsftpd/users.json" ]]; then
     chown root:root /data/$user
     chmod 755 /data/$user
 
-    # Create user in/out folders in Directory
-    mkdir -p /data/$user/in /data/$user/out
-    chown "$user" /data/$user/in /data/$user/out
-    chmod 700 /data/$user/in /data/$user/out
-    echo "[INFO] Created in/out directories for user $user."
-
-    # Create bind mount points for in/out directories
-    mkdir -p /data/$user/in /data/$user/out
-
+    # Create user in/out folders in Directory if they do not exist
+    for dir in in out; do
+      if [[ ! -d /data/$user/$dir ]]; then
+        mkdir -p /data/$user/$dir
+        chown "$user" /data/$user/$dir
+        chmod 700 /data/$user/$dir
+        echo "[INFO] Created $dir directory for user $user."
+      else
+        echo "[INFO] $dir directory for user $user already exists."
+      fi
+    done
   done
 else
   echo "[WARN] No user JSON found at /etc/vsftpd/users.json — skipping user bootstrap."
