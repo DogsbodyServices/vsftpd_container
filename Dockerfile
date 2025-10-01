@@ -33,7 +33,7 @@ RUN sed -i '/^module(load="imjournal"/,/^[[:space:]]*StateFile="imjournal.state"
 COPY --from=builder /usr/local/sbin/vsftpd /usr/local/sbin/vsftpd
 
 # Setup SSH and users
-RUN mkdir -p /var/run/sshd /data /var/run/rsyslog/dev && \
+RUN mkdir -p /var/run/sshd /data /var/run/rsyslog/dev /etc/vsftpd/ssh_keys && \
     groupadd simpleftp && \
     chmod 755 /var/run/rsyslog
 
