@@ -30,18 +30,6 @@ docker build -t vsftpd_container .
 
 ### Run with Docker Compose
 
-Ensure you have a users.json exported from any existing FTP servers, or created for this, format is shown below with a username and a hashed value for the password, hashed values can gbe generated usin ```openssl passwd -6 -salt xyz <yourpass>```. 
-
-If you dont provide this there will be no users in the container.  
-
-```
-{
-  "aaron": "$y$j9T$QGcBtB4.9NtptjoDgOGB51$hcIe4Ei4nM39rW.6pYBcVQjBHBRv0Jh4UdpeJA5C0x5",
-  "plainftp": "$6$BWZe/CFWGwBT4QTL$jB7eibRC0F99aIIf2dZJhut9xmTwrNkzqpx41nRLgFIY9ISkiCD8Y5457qTLoRzCLGKGUp9dEok1NCsd.2Ty0/",
-  "sftp": "$6$BWZe/CFWGwBT4QTL$jB7eibRC0F99aIIf2dZJhut9xmTwrNkzqpx41nRLgFIY9ISkiCD8Y5457qTLoRzCLGKGUp9dEok1NCsd.2Ty0/"
-}
-```
-
 ```bash
 docker compose up -d
 ```
@@ -81,6 +69,7 @@ services:
 │   ├── user_list                  # Allowed FTP users
 │   ├── users.json                 # User definitions (created at runtime)
 │   ├── ftpusers                   # System users denied FTP access
+│   ├── gcsfuse.repo               # Google Cloud Storage FUSE repository config
 │   └── machine_keys/              # Static SSH host keys for container identity
 ├── scripts/
 │   ├── entrypoint.sh              # Main container startup script
@@ -132,8 +121,6 @@ Each user gets a secure directory structure:
 /data/<username>/
 ├── in/          # Upload directory (writable by user)
 └── out/         # Download directory (writable by user)
-└── .ssh/        # If user is using key auth for SFTP, authorixed_keys file will be here owned by user (0600)
-
 ```
 
 Root directory `/data/<username>/` is owned by root and read-only to prevent privilege escalation.
@@ -266,7 +253,7 @@ The container includes FTPS support (currently disabled by default):
 
 - [ ] Replace JSON file with secure secret management (Vault/KMS)
 - [ ] Enhanced monitoring and metrics export
-- [ ] Work out Certificate Auth
+- [ ] PAM-based authentication integration
 
 ---
 
